@@ -165,15 +165,18 @@ export default function RecruiterDashboard() {
     }
   };
 
-  const setStatus = async (id, status) => {
+  const setStatus = async (id, status) => {setUpdatingApplicationId(id);
     try {
+      const{data:updatedApplication}=
       await api.patch(`/applications/${id}/status`, { status });
-      toast.success(`Application marked as ${status}`);
+      toast.success(`Application marked as ${updatedApplication.status}`);
       setApplicants((items) => 
         items.map((app) => (app._id === id ? { ...app, status } : app))
       );
     } catch (error) {
       toast.error('Unable to update application status');
+    }finally{
+      setUpdatingApplicationId(null);
     }
   };
 
@@ -448,24 +451,38 @@ export default function RecruiterDashboard() {
                           Resume
                         </a>
                       )}
-                      <button
-                        onClick={() => setStatus(app._id, 'reviewing')}
-                        className="btn-secondary text-xs text-sky-600 hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-950/30 sm:text-sm"
-                      >
-                        Reviewing
-                      </button>
-                      <button
-                        onClick={() => setStatus(app._id, 'accepted')}
-                        className="btn-secondary text-xs text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30 sm:text-sm"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => setStatus(app._id, 'rejected')}
-                        className="btn-secondary text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 sm:text-sm"
-                      >
-                        Reject
-                      </button>
+                      {app.status==='applied'&&(
+                        <button
+                        disabled={setUpdatingApplicationId===app._id}
+                        onClick={()=>setStatus(app._id,'reviewing')}
+                        className="btn-secondary text-xs text-sky-600 hover:bg-sky-50 disabled:opacity-50 dark:text-sky-300 dark:hover:bg-sky-950/30 sm:text-sm">
+                          <clock className="h-3.5 w-3.5 inline mr-1"/>
+                          Reviewing
+                        </button>
+                      )}
+                      {app.status==='reviewing'&&(
+                        <>
+                        <button
+                        disabled={UpdatingApplicationId==app._id}
+                        onClick={()=>setStatus(app._id,'accepted')}
+                        className="btn-secondary text-xs text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30 sm:text-sm">
+                          <CheckCircle2 className="h-3.5 w-3.5 inline mr-1"/>
+                          Accept
+                        </button>
+                        <button
+                        disabled={UpdatingApplicationId==app._id}
+                        onClick={()=>setStatus(app._id,'rejected')}
+                        className="btn-secondary text-xs text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30 sm:text-sm">
+                          <CheckCircle2 className="h-3.5 w-3.5 inline mr-1"/>
+                          Reject
+                        </button>
+                        </>
+                      )}
+                      {(app.status==='accepted'|| app.status==='rejected')&&(
+                        <span className="text-xs text-stone-400 italic dark:text-stone-500">
+                          Decision finalised
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}

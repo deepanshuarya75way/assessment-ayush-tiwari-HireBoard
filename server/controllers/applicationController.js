@@ -1,6 +1,7 @@
 const Application = require('../models/Application');
 const Job = require('../models/Job');
 const { uploadFile } = require('../config/cloudinary');
+const { request } = require('..');
 
 const applyToJob = async (req, res, next) => {
   try {
@@ -57,16 +58,32 @@ const jobApplicants = async (req, res, next) => {
 
 const updateApplicationStatus = async (req, res, next) => {
   try {
-    const application = await Application.findOneAndUpdate(
-      { _id: req.params.id, recruiter: req.account._id },
-      { status: req.body.status },
-      { new: true }
-    ).populate('user job');
+  const application=await Application.findOne({
+    _id:req.params.id,
+    recruiter:req.account._id
+  });
     if (!application) {
       res.status(404);
       throw new Error('Application not found');
     }
-    res.json(application);
+    const allowedTransitions={
+      applied:['reviewing'],
+      reviewing:['accepted','rejected']
+    };
+    if(!allowedTransitions[application.status]?.includes(req.body.status)){
+      res.status(409);
+      throw new Error('cannot change application status from $(application.status)to ${req.body.status}');
+    };
+    const updatedApplication=await Application.findOneAndUpdate(
+      {_id:application._id,recruiter:req.account._id,status:application.status},
+      {status:req.body.status},
+      {new:true}
+    ).populate('user job');
+    if(!updatedApplication){
+    res.status(409);
+    throw new Error("Application status changed during this request. Refreshand try again");
+    }
+    res.json(updateApplication);
   } catch (error) {
     next(error);
   }

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const API_BASE_URL =
-  "https://hireboard-api-ruddy.vercel.app";
+  "http://localhost:5000";
 
 const api = axios.create({
   baseURL:
@@ -12,8 +12,13 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  const token = localStorage.getItem("token")
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+    if(token){
+      config.headers.Authorization='Bearer ${token}';
+    }
+};
   return config;
 });
 
